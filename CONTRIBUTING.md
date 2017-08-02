@@ -82,12 +82,39 @@ The Frequently Asked Questions (FAQ) page is generated from the collection of
 documents stored in the `_faqs` directory. To add a new question/answer pair,
 simply do the following:
 
-1. Copy the `_templates/example_faq.md` file to the `_faqs` directory, and
+1. Copy the `_templates/example_faq.adoc` file to the `_faqs` directory, and
    rename it to suite reflect your question.
-1. Edit the contents of the new file to contain your question in the `title`
-   front matter variable, and the answer in the content section.
+1. Edit the contents of the new file to contain your question, the title of
+   the document will get converted to be used in the FAQ page.
 1. Commit the new file to your feature branch and propose a pull request when
    you are ready.
+
+## Adding a new presentation
+
+The community page contains a list of presentations given by and about
+radanalytics related topics. If you would like to add your presentation to
+this list, please follow these instructions:
+
+1. Copy the `_templates/example_presentation.adoc` file to the
+   `_presentations` directory and rename it to reflect the name of your
+   presentation.
+1. Edit the contents of the new file to contain your presentation abstract
+   and related information.
+1. Commit the new file to your feature branch and propose a pull request
+   when you are ready.
+
+## Adding a new project
+
+The projects page contains a list of the radanalytics hosted projects. If
+you would like to add a new project to this list, please follow these
+instructions:
+
+1. Copy the `_templates/example_project.adoc` file to the
+   `_projects` directory and rename it to reflect the name of the project.
+1. Edit the contents of the new file to contain the project information and
+   links.
+1. Commit the new file to your feature branch and propose a pull request
+   when you are ready.
 
 ### A note on front matter
 

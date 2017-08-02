@@ -40,8 +40,15 @@ exclude:
   - bower_components/eonasdan-bootstrap-datetimepicker
 
 collections:
-  faqs: {}
-  projects: {}
+  faqs:
+    output: true # this is to workaround issue #161 in jekyll-asciidoc
+    permalink: /collections/:collection/:path # this is also part of the workaround
+  presentations:
+    output: true # this is to workaround issue #161 in jekyll-asciidoc
+    permalink: /collections/:collection/:path # this is also part of the workaround
+  projects:
+    output: true # this is to workaround issue #161 in jekyll-asciidoc
+    permalink: /collections/:collection/:path # this is also part of the workaround
   applications:
     output: true
 
@@ -51,3 +58,7 @@ defaults:
   values:
     menu_template: menu_radanalytics.html
     menu_entry: Welcome
+
+asciidoc:
+  ext: adoc
+asciidoctor: {}
