@@ -578,6 +578,20 @@ items:
       - kind: Service
         apiVersion: v1
         metadata:
+          name: oc-proxy-service
+          labels:
+            name: oc-proxy-service
+        spec:
+          ports:
+          - name: oc-proxy-port
+            protocol: TCP
+            port: 8001
+            targetPort: 8001
+          selector:
+            name: oshinko-web
+      - kind: Service
+        apiVersion: v1
+        metadata:
           name: ${OSHINKO_WEB_NAME}
           labels:
             name: ${OSHINKO_WEB_NAME}
@@ -609,6 +623,7 @@ items:
               containers:
                 - name: ${OSHINKO_WEB_NAME}
                   image: ${OSHINKO_WEB_IMAGE}
+                  imagePullPolicy: Always
                   ports:
                     - name: o-web-port
                       containerPort: 8080
@@ -636,6 +651,24 @@ items:
                     periodSeconds: 10
                     successThreshold: 1
                     timeoutSeconds: 1
+                - name: oc-proxy
+                  image: docker.io/crobby/oc-proxy
+                  imagePullPolicy: IfNotPresent
+                  args:
+                    - proxy
+                    - "-p"
+                    - '8001'
+                    - "--address=0.0.0.0"
+                    - "--disable-filter=true"
+                    - "--loglevel=9"
+                    - "--api-prefix=/proxy"
+                  ports:
+                    - name: oc-proxy-port
+                      containerPort: 8001
+                      protocol: TCP
+                  volumes:
+                    - name: test-volume
+                      emptyDir: {}
               serviceAccount: oshinko
       - kind: Route
         apiVersion: v1
@@ -657,7 +690,7 @@ items:
       - name: OSHINKO_WEB_IMAGE
         description: Full name of the oshinko web image
         required: true
-        value: radanalyticsio/oshinko-webui
+        value: docker.io/crobby/oshinko-webui:experimental
       - name: OSHINKO_WEB_ROUTE_HOSTNAME
         description: The hostname used to create the external route for the webui
       - name: OSHINKO_DEPLOYMENT_NAME
@@ -666,3 +699,4 @@ items:
       - name: OSHINKO_REFRESH_INTERVAL
         value: "5"
         description: Refresh interval for updating cluster list in seconds
+
