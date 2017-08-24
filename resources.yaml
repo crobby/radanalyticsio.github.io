@@ -642,6 +642,7 @@ items:
                     periodSeconds: 10
                     successThreshold: 1
                     timeoutSeconds: 1
+                    initialDelaySeconds: 15
                   livenessProbe:
                     failureThreshold: 3
                     httpGet:
@@ -651,6 +652,7 @@ items:
                     periodSeconds: 10
                     successThreshold: 1
                     timeoutSeconds: 1
+                    initialDelaySeconds: 15
                 - name: oc-proxy
                   image: docker.io/crobby/oc-proxy
                   imagePullPolicy: IfNotPresent
