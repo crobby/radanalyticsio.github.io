@@ -578,9 +578,9 @@ items:
       - kind: Service
         apiVersion: v1
         metadata:
-          name: oc-proxy-service
+          name: ${PROXY_SERVICE_NAME}
           labels:
-            name: oc-proxy-service
+            name: ${PROXY_SERVICE_NAME}
         spec:
           ports:
           - name: oc-proxy-port
@@ -633,6 +633,14 @@ items:
                       value: ${OSHINKO_CLUSTER_IMAGE}
                     - name: OSHINKO_REFRESH_INTERVAL
                       value: ${OSHINKO_REFRESH_INTERVAL}
+                    - name: WEB_ROUTE_NAME
+                      value: ${OSHINKO_WEB_NAME}
+                    - name: PROXY_SERVICE_NAME
+                      value: ${PROXY_SERVICE_NAME}
+                    - name: CURRENT_NAMESPACE
+                      valueFrom:
+                        fieldRef:
+                          fieldPath: metadata.namespace
                   readinessProbe:
                     failureThreshold: 3
                     httpGet:
@@ -701,4 +709,6 @@ items:
       - name: OSHINKO_REFRESH_INTERVAL
         value: "5"
         description: Refresh interval for updating cluster list in seconds
-
+      - name: PROXY_SERVICE_NAME
+        value: "oc-proxy-service"
+        description: Name of the service running oc proxy
