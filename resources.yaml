@@ -58,6 +58,9 @@ items:
               ref: ${GIT_REF}
               uri: ${GIT_URI}
             type: Git
+            secrets:
+              - secret:
+                  name: secretfile
           strategy:
             sourceStrategy:
               type: Source
@@ -67,7 +70,7 @@ items:
               forcePull: true
               from:
                 kind: DockerImage
-                name: radanalyticsio/radanalytics-pyspark:stable
+                name: 172.30.1.1:5000/testsecret/cr-python-s2i
           triggers:
             - type: ConfigChange
             - type: ImageChange
@@ -748,7 +751,7 @@ items:
       - name: OSHINKO_WEB_IMAGE
         description: Full name of the oshinko web image
         required: true
-        value: radanalyticsio/oshinko-webui:stable
+        value: 172.30.1.1:5000/myproject/concreate-oshinko-webui
       - name: OSHINKO_WEB_ROUTE_HOSTNAME
         description: The hostname used to create the external route for the webui
       - name: OSHINKO_REFRESH_INTERVAL
@@ -884,7 +887,7 @@ items:
       - name: OSHINKO_WEB_IMAGE
         description: Full name of the oshinko web image
         required: true
-        value: radanalyticsio/oshinko-webui:stable
+        value: 172.30.1.1:5000/myproject/concreate-oshinko-webui
       - name: OSHINKO_WEB_ROUTE_HOSTNAME
         description: The hostname used to create the external route for the webui
       - name: OSHINKO_REFRESH_INTERVAL
