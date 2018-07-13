@@ -934,3 +934,211 @@ items:
       - name: OSHINKO_REFRESH_INTERVAL
         value: "5"
         description: Refresh interval for updating cluster list in seconds
+
+  - apiVersion: v1
+    kind: Template
+    labels:
+      application: oshinko-scala-spark-crd
+      createdBy: template-oshinko-scala-spark-build-dc-crd
+    metadata:
+      annotations:
+        description: Create a buildconfig, imagestream and deploymentconfig using source-to-image and Scala Spark source files hosted in git
+        openshift.io/display-name: Apache Spark Scala CRD
+      name: oshinko-scala-spark-build-dc-crd
+    objects:
+    - apiVersion: v1
+      kind: ImageStream
+      metadata:
+        name: ${APPLICATION_NAME}
+        labels:
+          app: ${APPLICATION_NAME}
+      spec:
+        dockerImageRepository: ${APPLICATION_NAME}
+        tags:
+        - name: latest
+    - apiVersion: v1
+      kind: BuildConfig
+      metadata:
+        name: ${APPLICATION_NAME}
+        labels:
+          app: ${APPLICATION_NAME}
+      spec:
+        output:
+          to:
+            kind: ImageStreamTag
+            name: ${APPLICATION_NAME}:latest
+        source:
+          contextDir: ${CONTEXT_DIR}
+          git:
+            ref: ${GIT_REF}
+            uri: ${GIT_URI}
+          type: Git
+        strategy:
+          sourceStrategy:
+            env:
+            - name: APP_FILE
+              value: ${APP_FILE}
+            - name: SBT_ARGS
+              value: ${SBT_ARGS}
+            - name: SBT_ARGS_APPEND
+              value: ${SBT_ARGS_APPEND}
+            forcePull: true
+            from:
+              kind: DockerImage
+              name: 172.30.1.1:5000/tryitout/thetestimage
+          type: Source
+        triggers:
+        - imageChange: {}
+          type: ImageChange
+        - type: ConfigChange
+        - github:
+            secret: ${APPLICATION_NAME}
+          type: GitHub
+        - generic:
+            secret: ${APPLICATION_NAME}
+          type: Generic
+    - apiVersion: v1
+      kind: DeploymentConfig
+      metadata:
+        name: ${APPLICATION_NAME}
+        labels:
+          deploymentConfig: ${APPLICATION_NAME}
+          app: ${APPLICATION_NAME}
+      spec:
+        replicas: 1
+        selector:
+          deploymentConfig: ${APPLICATION_NAME}
+        strategy:
+          type: Rolling
+        template:
+          metadata:
+            labels:
+              deploymentConfig: ${APPLICATION_NAME}
+              app: ${APPLICATION_NAME}
+          spec:
+            containers:
+            - env:
+              - name: DRIVER_HOST
+                value: ${APPLICATION_NAME}-headless
+              - name: OSHINKO_CLUSTER_NAME
+                value: ${OSHINKO_CLUSTER_NAME}
+              - name: APP_ARGS
+                value: ${APP_ARGS}
+              - name: SPARK_OPTIONS
+                value: ${SPARK_OPTIONS}
+              - name: APP_MAIN_CLASS
+                value: ${APP_MAIN_CLASS}
+              - name: OSHINKO_DEL_CLUSTER
+                value: ${OSHINKO_DEL_CLUSTER}
+              - name: APP_EXIT
+                value: "true"
+              - name: OSHINKO_NAMED_CONFIG
+                value: ${OSHINKO_NAMED_CONFIG}
+              - name: OSHINKO_SPARK_DRIVER_CONFIG
+                value: ${OSHINKO_SPARK_DRIVER_CONFIG}
+              - name: OSHINKO_K8S_CRD
+                value: "true"
+              - name: APPLICATION_NAME
+                value: ${APPLICATION_NAME}
+              - name: POD_NAME
+                valueFrom:
+                  fieldRef:
+                    fieldPath: metadata.name
+              image: ${APPLICATION_NAME}
+              imagePullPolicy: IfNotPresent
+              name: ${APPLICATION_NAME}
+              resources: {}
+              terminationMessagePath: /dev/termination-log
+              volumeMounts:
+              - mountPath: /etc/podinfo
+                name: podinfo
+                readOnly: false
+            dnsPolicy: ClusterFirst
+            restartPolicy: Always
+            serviceAccount: oshinko
+            volumes:
+            - downwardAPI:
+                items:
+                - fieldRef:
+                    fieldPath: metadata.labels
+                  path: labels
+              name: podinfo
+        triggers:
+        - imageChangeParams:
+            automatic: true
+            containerNames:
+              - ${APPLICATION_NAME}
+            from:
+              kind: ImageStreamTag
+              name: ${APPLICATION_NAME}:latest
+          type: ImageChange
+        - type: ConfigChange
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: ${APPLICATION_NAME}
+        labels:
+          app: ${APPLICATION_NAME}
+      spec:
+        ports:
+        - name: 8080-tcp
+          port: 8080
+          protocol: TCP
+          targetPort: 8080
+        selector:
+          deploymentConfig: ${APPLICATION_NAME}
+    - apiVersion: v1
+      kind: Service
+      metadata:
+        name: ${APPLICATION_NAME}-headless
+        labels:
+          app: ${APPLICATION_NAME}
+      spec:
+        clusterIP: None
+        ports:
+        - name: driver-rpc-port
+          port: 7078
+          protocol: TCP
+          targetPort: 7078
+        - name: blockmanager
+          port: 7079
+          protocol: TCP
+          targetPort: 7079
+        selector:
+          deploymentConfig: ${APPLICATION_NAME}
+    parameters:
+    - description: The name to use for the buildconfig, imagestream and deployment objects
+      from: 'scala-spark-[a-z0-9]{4}'
+      generate: expression
+      name: APPLICATION_NAME
+      required: true
+    - description: Git source URI for application
+      name: GIT_URI
+    - description: Git branch/tag reference
+      name: GIT_REF
+      value: master
+    - description: Git sub-directory path
+      name: CONTEXT_DIR
+    - description: The name of the main JAR file. If this is not specified and there is a single JAR produced by the build, that JAR will be chosen.
+      name: APP_FILE
+    - description: Command line arguments to pass to the spark application
+      name: APP_ARGS
+    - description: Application main class for jar-based applications
+      name: APP_MAIN_CLASS
+    - description: List of additional spark options to pass to spark-submit (for exmaple --conf property=value --conf property=value). Note, --master and --class are set by the launcher and should not be set here
+      name: SPARK_OPTIONS
+    - description: The name of the spark cluster to run against. The cluster will be created if it does not exist, and a random cluster name will be chosen if this value is left blank.
+      name: OSHINKO_CLUSTER_NAME
+    - description: The name of a stored cluster configuration to use if a cluster is created, default is 'default'.
+      name: OSHINKO_NAMED_CONFIG
+    - description: The name of a configmap to use for the spark configuration of the driver. If this configmap is empty the default spark configuration will be used.
+      name: OSHINKO_SPARK_DRIVER_CONFIG
+    - description: If a cluster is created on-demand, delete the cluster when the application finishes if this option is set to 'true'
+      name: OSHINKO_DEL_CLUSTER
+      required: true
+      value: 'true'
+    - description: Arguments to use when calling sbt, replacing the default `package`
+      name: SBT_ARGS
+    - description: Additional sbt arguments, useful for adding task arguments to sbt like `publish makePom`
+      name: SBT_ARGS_APPEND
+
